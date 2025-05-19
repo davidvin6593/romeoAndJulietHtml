@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Romeo & Juliet: Interactive Story</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #fbeee0;
+      color: #333;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #a12c2f;
+    }
+    .story,
+    .choices {
+      margin-top: 20px;
+    }
+    .choice-btn {
+      display: inline-block;
+      margin: 10px 10px 0 0;
+      padding: 10px 20px;
+      background-color: #a12c2f;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.3s ease;
+    }
+    .choice-btn.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+    .choice-btn.hide {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+    .hidden {
+      display: none;
+    }
+    .typewriter {
+      border-right: 0.15em solid #a12c2f;
+      white-space: pre-wrap;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <h1>Romeo & Juliet: The Interactive Story</h1>
+
+  <div id="game">
+    <div id="story" class="story typewriter"></div>
+    <div id="choices" class="choices"></div>
+  </div>
+
+  <script>
+    const scenes = {
+      start: {
+        text:
+          "You are Romeo of House Montague.\n\nYour friend Benvolio tells you the Capulets are throwing a masquerade ball tonight. Do you go?",
+        choices: [
+          { text: "Crash the party", next: "party" },
+          { text: "Stay home", next: "home" },
+        ],
+      },
+      home: {
+        text:
+          "You stay home, avoiding trouble. You never meet Juliet.\n\nYour life continues... safely but without love.\n\nThe story ends before it begins. 💔",
+        choices: [{ text: "Restart", next: "start" }],
+      },
+      party: {
+        text:
+          "You sneak into the Capulet ball.\n\nMasked and mysterious, you dance. Your eyes meet Juliet's across the room. Time stops.\n\nBut Tybalt recognizes your voice.",
+        choices: [
+          { text: "Talk to Juliet", next: "balcony" },
+          { text: "Confront Tybalt", next: "duel" },
+        ],
+      },
+      balcony: {
+        text:
+          "You meet Juliet at her balcony later that night.\n\nShe confesses her love. You swear to marry in secret tomorrow.\n\nThe next day, news spreads: Tybalt wants revenge.",
+        choices: [
+          { text: "Duel Tybalt to protect honor", next: "banishment" },
+          { text: "Avoid the fight", next: "peace" },
+        ],
+      },
+      duel: {
+        text:
+          "Tybalt challenges you at the party.\n\nYou draw your sword. After a fierce battle, you defeat him—but the Prince banishes you for bloodshed.",
+        choices: [{ text: "Continue", next: "banishment" }],
+      },
+      peace: {
+        text:
+          "You try to avoid Tybalt. But Mercutio fights in your place and dies.\n\nFueled by grief, you slay Tybalt anyway.\n\nThe Prince arrives: you're banished.",
+        choices: [{ text: "Continue", next: "banishment" }],
+      },
+      banishment: {
+        text:
+          "You and Juliet secretly marry. But you're sent away from Verona.\n\nJuliet fakes her death to avoid marrying Paris.\n\nYou hear of her 'death' and rush back, heartbroken.",
+        choices: [
+          { text: "Take poison beside Juliet", next: "tragedy" },
+          { text: "Wait and investigate", next: "survive" },
+        ],
+      },
+      tragedy: {
+        text:
+          "You take the poison and die beside Juliet.\n\nMoments later, she awakens. Finding you dead, she ends her life too.\n\nTheir love unites the feuding families at last... but at a terrible cost.",
+        choices: [{ text: "Play again", next: "start" }],
+      },
+      survive: {
+        text:
+          "You pause. Something feels wrong.\n\nYou discover Juliet is alive and learn of her plan just in time.\n\nYou escape together to Mantua, far from hate, free at last.",
+        choices: [{ text: "Play again", next: "start" }],
+      },
+    };
+
+    const storyEl = document.getElementById("story");
+    const choicesEl = document.getElementById("choices");
+
+    function typeWriter(text, callback) {
+      storyEl.innerHTML = "";
+      let i = 0;
+      const speed = 30;
+      function type() {
+        if (i < text.length) {
+          storyEl.innerHTML += text.charAt(i);
+          i++;
+          setTimeout(type, text.charAt(i - 1) === "\n" ? speed * 2 : speed);
+        } else {
+          callback();
+        }
+      }
+      type();
+    }
+
+    function showScene(sceneId) {
+      const scene = scenes[sceneId];
+      typeWriter(scene.text, () => {
+        choicesEl.innerHTML = "";
+        scene.choices.forEach((choice, index) => {
+          const btn = document.createElement("a");
+          btn.className = "choice-btn";
+          btn.textContent = choice.text;
+          btn.onclick = () => {
+            // Disable and hide all buttons immediately
+            const allButtons = document.querySelectorAll(".choice-btn");
+            allButtons.forEach((b) => {
+              b.classList.remove("show");
+              b.classList.add("hide");
+              b.style.pointerEvents = "none";
+            });
+            showScene(choice.next);
+          };
+          choicesEl.appendChild(btn);
+          setTimeout(() => btn.classList.add("show"), 300 * index);
+        });
+      });
+    }
+
+    // Start the game
+    showScene("start");
+  </script>
+</body>
+</html>
