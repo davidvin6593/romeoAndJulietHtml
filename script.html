@@ -93,7 +93,7 @@
       },
       home: {
         text:
-          "You stay home, avoiding trouble. You never meet Juliet.\n\nYour life continues... safely but without love.\n\nThe story ends before it begins. 🥀",
+          "You stay home, avoiding trouble. You never meet Juliet.\n\nYour life continues... safely but without love.\n\nThe story ends before it begins. 💔",
         choices: [{ text: "Restart", next: "start" }],
       },
       party: {
@@ -108,14 +108,9 @@
         text:
           "You meet Juliet at her balcony later that night.\n\nShe confesses her love. You swear to marry in secret tomorrow.\n\nThe next day, news spreads: Tybalt wants revenge.",
         choices: [
-          { text: "Duel Tybalt to protect honor", next: "banishment" },
+          { text: "Duel Tybalt to protect honor", next: "fight" },
           { text: "Avoid the fight", next: "peace" },
         ],
-      },
-      duel: {
-        text:
-          "You defeat Tybalt in a dramatic duel.\n\nBut the Prince banishes you for bloodshed.",
-        choices: [{ text: "Continue", next: "banishment" }],
       },
       peace: {
         text:
@@ -209,7 +204,6 @@
         if (!running) return;
         ctx.clearRect(0, 0, chaseCanvas.width, chaseCanvas.height);
 
-        // Player
         player.y += player.dy;
         player.dy += player.gravity;
         if (player.y > 110) {
@@ -219,7 +213,6 @@
         }
         ctx.fillText("👨", player.x, player.y);
 
-        // Hurdles
         if (frame % 50 === 0) {
           hurdles.push({ x: 800, y: 120, width: 20 });
         }
@@ -229,7 +222,6 @@
         });
         hurdles = hurdles.filter(h => h.x + h.width > 0);
 
-        // Collision
         for (let h of hurdles) {
           if (
             player.x < h.x + h.width &&
@@ -253,8 +245,8 @@
       setTimeout(() => {
         if (running) {
           chaseCanvas.classList.add("hidden");
-          storyEl.textContent = "You made it past the chase! Time to fight Tybalt.";
-          setTimeout(() => showScene("fight"), 1500);
+          storyEl.textContent = "Tybalt challenges you at the party.";
+          setTimeout(() => showScene("fight"), 2000);
           running = false;
         }
       }, 20000);
@@ -262,7 +254,7 @@
 
     function startFight() {
       let romeoHP = 100, tybaltHP = 100;
-      storyEl.innerHTML = "⚔️ A duel begins between Romeo and Tybalt!\n";
+      storyEl.innerHTML = "Tybalt challenges you at the party.\n\nYou draw your sword.\n";
       choicesEl.innerHTML = "";
 
       const hpContainer = document.createElement("div");
@@ -319,7 +311,7 @@
         storyEl.innerHTML += `\nYou deal ${romeoHit} to Tybalt. He deals ${tybaltHit} to you.\n`;
 
         if (tybaltHP <= 0) {
-          storyEl.innerHTML += "\n🎉 You defeated Tybalt!";
+          storyEl.innerHTML += "\nYou defeat Tybalt in a fierce battle. But the Prince banishes you for bloodshed.";
           endFight("banishment");
         } else if (romeoHP <= 0) {
           storyEl.innerHTML += "\n💀 You fall... Tybalt wins.";
