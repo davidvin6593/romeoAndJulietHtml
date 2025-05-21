@@ -312,7 +312,7 @@
 
         if (tybaltHP <= 0) {
           storyEl.innerHTML += "\nYou defeat Tybalt in a fierce battle. But the Prince banishes you for bloodshed.";
-          endFight("banishment");
+          endFight("banishment", "Continue");
         } else if (romeoHP <= 0) {
           storyEl.innerHTML += "\n💀 You fall... Tybalt wins.";
           endFight("start", "Try Again");
