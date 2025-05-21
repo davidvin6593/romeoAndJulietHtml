@@ -28,31 +28,70 @@
       border-radius: 5px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.4s ease, transform 0.3s ease;
     }
     .choice-btn.show {
       opacity: 1;
       pointer-events: auto;
+      transform: scale(1);
+    }
+    .choice-btn.hide {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.95);
     }
     .typewriter {
-      border-right: .15em solid #a12c2f;
+      border-right: 0.15em solid #a12c2f;
       white-space: pre-wrap;
       overflow: hidden;
     }
-    #minigame, #battle {
-      margin-top: 30px;
+
+    /* Mini-game styles */
+    #minigame {
       display: none;
-    }
-    #gameCanvas {
-      background: #f4e2d8;
+      background: #fff4dc;
       border: 2px solid #a12c2f;
-      display: block;
-      margin: auto;
+      padding: 20px;
+      margin-top: 20px;
+      position: relative;
+      height: 100px;
+      overflow: hidden;
+    }
+    .character {
+      position: absolute;
+      left: 20px;
+      bottom: 10px;
+      font-size: 2em;
+    }
+    .enemy {
+      position: absolute;
+      left: 0;
+      bottom: 10px;
+      font-size: 2em;
+    }
+    .hurdle {
+      position: absolute;
+      bottom: 10px;
+      width: 20px;
+      height: 30px;
+      background-color: #a12c2f;
+      animation: moveHurdle 2s linear infinite;
+    }
+    @keyframes moveHurdle {
+      0% { left: 800px; }
+      100% { left: -20px; }
+    }
+    .jump {
+      animation: jump 0.6s ease-out;
+    }
+    @keyframes jump {
+      0% { bottom: 10px; }
+      50% { bottom: 60px; }
+      100% { bottom: 10px; }
     }
   </style>
 </head>
 <body>
-
   <h1>Romeo & Juliet: The Interactive Story</h1>
 
   <div id="game">
@@ -61,14 +100,8 @@
   </div>
 
   <div id="minigame">
-    <canvas id="gameCanvas" width="600" height="150"></canvas>
-    <p style="text-align: center;">Press Space to jump! 🧑‍🦱 is running from 🗡️</p>
-  </div>
-
-  <div id="battle">
-    <h2>⚔️ Duel Begins!</h2>
-    <p>You draw your sword and face Tybalt!</p>
-    <button onclick="endBattle()">Strike!</button>
+    <div id="enemy" class="enemy">😠</div>
+    <div id="romeo" class="character">🧑‍🦱</div>
   </div>
 
   <script>
@@ -88,7 +121,7 @@
         text: "You sneak into the Capulet ball.\n\nMasked and mysterious, you dance. Your eyes meet Juliet's across the room. Time stops.\n\nBut Tybalt recognizes your voice.",
         choices: [
           { text: "Talk to Juliet", next: "balcony" },
-          { text: "Confront Tybalt", next: "runMiniGame" }
+          { text: "Confront Tybalt", next: "minigame" }
         ]
       },
       balcony: {
@@ -99,7 +132,7 @@
         ]
       },
       duel: {
-        text: "Tybalt challenges you at the party.\n\nYou draw your sword. After a fierce battle, you defeat him—but the Prince banishes you for bloodshed.",
+        text: "Tybalt challenges you.\n\nYou draw your sword. After a fierce battle, you defeat him—but the Prince banishes you for bloodshed.",
         choices: [{ text: "Continue", next: "banishment" }]
       },
       peace: {
@@ -125,10 +158,6 @@
 
     const storyEl = document.getElementById('story');
     const choicesEl = document.getElementById('choices');
-    const minigame = document.getElementById('minigame');
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const battle = document.getElementById('battle');
 
     function typeWriter(text, callback) {
       storyEl.innerHTML = '';
@@ -147,13 +176,10 @@
     }
 
     function showScene(sceneId) {
-      if (sceneId === "runMiniGame") {
-        startMiniGame();
+      if (sceneId === "minigame") {
+        runMiniGame();
         return;
       }
-      minigame.style.display = 'none';
-      battle.style.display = 'none';
-      canvas.width = canvas.width; // Clear canvas
       const scene = scenes[sceneId];
       typeWriter(scene.text, () => {
         choicesEl.innerHTML = '';
@@ -162,9 +188,10 @@
           btn.className = 'choice-btn';
           btn.textContent = choice.text;
           btn.onclick = () => {
-            const allBtns = document.querySelectorAll('.choice-btn');
-            allBtns.forEach(b => {
+            const allButtons = document.querySelectorAll(".choice-btn");
+            allButtons.forEach(b => {
               b.classList.remove("show");
+              b.classList.add("hide");
               b.style.pointerEvents = "none";
             });
             showScene(choice.next);
@@ -175,102 +202,86 @@
       });
     }
 
-    // Start the game
-    showScene('start');
+    function runMiniGame() {
+      const game = document.getElementById("game");
+      const minigame = document.getElementById("minigame");
+      const romeo = document.getElementById("romeo");
+      const enemy = document.getElementById("enemy");
 
-    // --- Mini Game Logic ---
-    let romeoY = 100;
-    let velocityY = 0;
-    let isJumping = false;
-    const gravity = 1;
-    let hurdles = [];
-    let hurdleTimer = 0;
-    let startTime = null;
-    let gameOver = false;
+      storyEl.innerHTML = "🏃 Romeo is running from Tybalt! Jump the hurdles! Survive 20 seconds!";
+      choicesEl.innerHTML = "";
+      game.appendChild(minigame);
+      minigame.style.display = "block";
 
-    function startMiniGame() {
-      storyEl.innerHTML = '';
-      choicesEl.innerHTML = '';
-      minigame.style.display = 'block';
-      hurdles = [];
-      romeoY = 100;
-      velocityY = 0;
-      isJumping = false;
-      gameOver = false;
-      startTime = performance.now();
-      requestAnimationFrame(runMiniGame);
-    }
+      let gameOver = false;
+      let startTime = Date.now();
+      let hurdles = [];
 
-    function runMiniGame(timestamp) {
-      let elapsed = (timestamp - startTime) / 1000;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Romeo (🧑‍🦱)
-      ctx.font = '30px serif';
-      ctx.fillText('🧑‍🦱', 50, romeoY);
-
-      // Tybalt (🗡️)
-      ctx.fillText('🗡️', 10, 100);
-
-      // Hurdles
-      hurdleTimer++;
-      if (hurdleTimer > 100) {
-        hurdles.push({ x: 600 });
-        hurdleTimer = 0;
+      function spawnHurdle() {
+        if (gameOver) return;
+        const hurdle = document.createElement("div");
+        hurdle.className = "hurdle";
+        hurdle.style.left = "800px";
+        minigame.appendChild(hurdle);
+        hurdles.push(hurdle);
+        setTimeout(spawnHurdle, Math.random() * 2000 + 1000);
       }
 
-      for (let i = hurdles.length - 1; i >= 0; i--) {
-        hurdles[i].x -= 5;
-        ctx.fillText('⬛', hurdles[i].x, 100);
-        if (
-          hurdles[i].x < 75 &&
-          hurdles[i].x > 25 &&
-          romeoY > 70
-        ) {
+      function jump() {
+        if (!romeo.classList.contains("jump")) {
+          romeo.classList.add("jump");
+          setTimeout(() => romeo.classList.remove("jump"), 600);
+        }
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") jump();
+      });
+
+      function gameLoop() {
+        if (gameOver) return;
+        let now = Date.now();
+        let elapsed = (now - startTime) / 1000;
+
+        hurdles.forEach(h => {
+          let hurdleX = h.getBoundingClientRect().left;
+          let romeoX = romeo.getBoundingClientRect().left;
+          let romeoY = romeo.getBoundingClientRect().bottom;
+          let hurdleY = h.getBoundingClientRect().bottom;
+
+          if (
+            hurdleX < romeoX + 40 &&
+            hurdleX + 20 > romeoX &&
+            romeoY < hurdleY &&
+            !romeo.classList.contains("jump")
+          ) {
+            gameOver = true;
+            minigame.innerHTML = "💥 You tripped! Tybalt caught you!";
+            setTimeout(() => {
+              minigame.style.display = "none";
+              showScene("duel");
+            }, 2000);
+          }
+        });
+
+        if (elapsed >= 20 && !gameOver) {
+          minigame.innerHTML = "✅ You escaped Tybalt!";
+          setTimeout(() => {
+            minigame.style.display = "none";
+            showScene("duel");
+          }, 2000);
           gameOver = true;
         }
+
+        if (!gameOver) requestAnimationFrame(gameLoop);
       }
 
-      // Jumping logic
-      if (isJumping) {
-        velocityY -= gravity;
-        romeoY -= velocityY;
-        if (romeoY >= 100) {
-          romeoY = 100;
-          velocityY = 0;
-          isJumping = false;
-        }
-      }
-
-      if (gameOver) {
-        ctx.fillStyle = 'red';
-        ctx.font = '20px sans-serif';
-        ctx.fillText('Game Over! Tybalt caught you!', 200, 80);
-        setTimeout(() => showScene("duel"), 2000);
-        return;
-      }
-
-      if (elapsed >= 20) {
-        minigame.style.display = 'none';
-        battle.style.display = 'block';
-        return;
-      }
-
-      requestAnimationFrame(runMiniGame);
+      spawnHurdle();
+      gameLoop();
     }
 
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && !isJumping && minigame.style.display === 'block') {
-        isJumping = true;
-        velocityY = 15;
-      }
-    });
-
-    function endBattle() {
-      showScene("duel");
-    }
+    // Start the game
+    showScene("start");
   </script>
-
 </body>
 </html>
