@@ -320,13 +320,16 @@
       }
 
       function endFight(nextScene, label = "Continue") {
-        choicesEl.innerHTML = "";
-        updateBars();
-        const next = document.createElement("a");
-        next.className = "choice-btn show";
-        next.textContent = label;
-        next.onclick = () => showScene(nextScene);
-        choicesEl.appendChild(next);
+        setTimeout(() => {
+          choicesEl.innerHTML = "";
+          updateBars();
+          const next = document.createElement("a");
+          next.className = "choice-btn";
+          next.textContent = label;
+          next.onclick = () => showScene(nextScene);
+          choicesEl.appendChild(next);
+          setTimeout(() => next.classList.add("show"), 200);
+        }, 1000);
       }
 
       createAction("🗡️ Attack", () => attack("attack"));
